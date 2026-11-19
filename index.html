@@ -1,1 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Báo cáo tồn kho</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #fff; --text: #1f2430; --muted: #8a90a0;
+    --line: #e4e7ec; --head: #1f3a5f; --accent: #1f6feb;
+    --warn2: #fff4d6; --warn3: #ffe2c2; --warn4: #ffd0d0; --neg: #c62828;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: var(--bg); color: var(--text); }
+  header { padding: 20px 16px 8px; max-width: 1400px; margin: 0 auto; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 8px 16px 40px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+           gap: 12px; margin: 12px 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .card .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+  .card .value { font-size: 20px; font-weight: 600; margin-top: 4px; }
+
+  .tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0; }
+  .tools input[type=search], .tools select {
+    padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; background: #fff; }
+  .tools input[type=search] { flex: 1 1 260px; }
+  .tools label { font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .count { color: var(--muted); font-size: 13px; margin-left: auto; }
+
+  .table-box { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+               overflow: auto; max-height: 72vh; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td.name { white-space: normal; min-width: 280px; max-width: 460px; }
+  th { position: sticky; top: 0; background: var(--head); color: #fff; text-align: left;
+       cursor: pointer; user-select: none; z-index: 1; }
+  th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  th .arrow { opacity: .6; margin-left: 4px; font-size: 11px; }
+  tbody tr:hover { background: #f0f5ff; }
+  .zero { color: #c3c8d2; }
+  .neg { color: var(--neg); font-weight: 600; }
+  .a2 { background: var(--warn2); } .a3 { background: var(--warn3); } .a4 { background: var(--warn4); }
+  tfoot td { position: sticky; bottom: 0; background: #eef2f8; font-weight: 700; }
+
+  .legend { font-size: 13px; color: var(--muted); margin-top: 10px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+                         margin-right: 6px; vertical-align: -2px; border: 1px solid var(--line); }
+  .legend .l2::before { background: var(--warn2); } .legend .l3::before { background: var(--warn3); }
+  .legend .l4::before { background: var(--warn4); }
+
+  #msg { background: #fff; border: 1px dashed var(--line); border-radius: 10px; padding: 18px; margin: 12px 0; display: none; }
+  #msg.show { display: block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Báo cáo tồn kho</h1>
+  <div class="sub">Bấm vào tiêu đề cột để sắp xếp. Gõ vào ô tìm kiếm để lọc theo mã hoặc tên hàng.</div>
+</header>
+
+<div class="wrap">
+  <div id="msg">
+    <b>Không tải được file baocaotonkho.csv tự động.</b><br>
+    Nếu bạn mở file index.html trực tiếp từ máy tính thì trình duyệt sẽ chặn việc đọc file.
+    Hãy chọn file CSV thủ công:
+    <input type="file" id="filePick" accept=".csv,text/csv">
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="label">Số mặt hàng</div><div class="value" id="cItems">0</div></div>
+    <div class="card"><div class="label">Tổng giá trị tồn</div><div class="value" id="cTotal">0</div></div>
+    <div class="card"><div class="label">Hàng tồn trên 2 tháng</div><div class="value" id="c2">0</div></div>
+    <div class="card"><div class="label">Hàng tồn trên 3 tháng</div><div class="value" id="c3">0</div></div>
+    <div class="card"><div class="label">Hàng tồn trên 4 tháng</div><div class="value" id="c4">0</div></div>
+  </div>
+
+  <div class="tools">
+    <input type="search" id="q" placeholder="Tìm theo mã hoặc tên hàng...">
+    <select id="unit"><option value="">Tất cả ĐVT</option></select>
+    <label><input type="checkbox" id="onlyOld"> Chỉ hàng tồn lâu (trên 2/3/4 tháng)</label>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="table-box">
+    <table>
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody>
+      <tfoot><tr id="tfoot"></tr></tfoot>
+    </table>
+  </div>
+
+  <div class="legend">
+    <span class="l2">Tồn trên 2 tháng</span>
+    <span class="l3">Tồn trên 3 tháng</span>
+    <span class="l4">Tồn trên 4 tháng</span>
+  </div>
+</div>
+
+<script>
+const CSV_FILE = "baocaotonkho.csv";
+
+// Cấu hình cột: key, tiêu đề, có phải cột số không
+const COLS = [
+  { key: "ma",   title: "MÃ",                 num: false },
+  { key: "ten",  title: "TÊN HÀNG",           num: false },
+  { key: "dvt",  title: "ĐVT",                num: false },
+  { key: "t2",   title: "TRÊN 2 THÁNG",       num: true, cls: "a2" },
+  { key: "t3",   title: "TRÊN 3 THÁNG",       num: true, cls: "a3" },
+  { key: "t4",   title: "TRÊN 4 THÁNG",       num: true, cls: "a4" },
+  { key: "ton",  title: "TỒN KHO HIỆN TẠI",   num: true },
+  { key: "tien", title: "TỔNG TIỀN",          num: true },
+  { key: "gia",  title: "ĐƠN GIÁ VỐN",        num: true },
+];
+
+let rows = [];
+let sortKey = null, sortDir = 1;
+
+// "1.234.567" -> 1234567 ; " -   " hoặc chữ lạ -> 0
+function toNumber(s) {
+  s = (s || "").trim();
+  if (!/^-?[\d.,]+$/.test(s)) return 0;
+  return Number(s.replace(/\./g, "").replace(",", ".")) || 0;
+}
+const fmt = n => n.toLocaleString("vi-VN");
+
+function parseCSV(text) {
+  text = text.replace(/^﻿/, "");
+  const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+  lines.shift(); // bỏ dòng tiêu đề
+  return lines.map(line => {
+    const c = line.split(";");
+    return {
+      ma: (c[0] || "").trim(), ten: (c[1] || "").trim(), dvt: (c[2] || "").trim(),
+      t2: toNumber(c[3]), t3: toNumber(c[4]), t4: toNumber(c[5]),
+      ton: toNumber(c[6]), tien: toNumber(c[7]), gia: toNumber(c[8]),
+    };
+  });
+}
+
+function buildHead() {
+  const tr = document.getElementById("thead");
+  tr.innerHTML = "";
+  COLS.forEach(col => {
+    const th = document.createElement("th");
+    if (col.num) th.className = "num";
+    th.innerHTML = col.title + '<span class="arrow">' +
+      (sortKey === col.key ? (sortDir > 0 ? "▲" : "▼") : "↕") + "</span>";
+    th.onclick = () => {
+      if (sortKey === col.key) sortDir = -sortDir; else { sortKey = col.key; sortDir = 1; }
+      buildHead(); render();
+    };
+    tr.appendChild(th);
+  });
+}
+
+function cell(v, col) {
+  const td = document.createElement("td");
+  if (!col.num) {
+    td.textContent = v;
+    if (col.key === "ten") td.className = "name";
+    return td;
+  }
+  td.className = "num";
+  if (v === 0) { td.textContent = "-"; td.classList.add("zero"); }
+  else {
+    td.textContent = fmt(v);
+    if (v < 0) td.classList.add("neg");
+    if (col.cls && v > 0) td.classList.add(col.cls);
+  }
+  return td;
+}
+
+function filtered() {
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const unit = document.getElementById("unit").value;
+  const onlyOld = document.getElementById("onlyOld").checked;
+  let list = rows.filter(r =>
+    (!q || r.ma.toLowerCase().includes(q) || r.ten.toLowerCase().includes(q)) &&
+    (!unit || r.dvt === unit) &&
+    (!onlyOld || r.t2 > 0 || r.t3 > 0 || r.t4 > 0));
+  if (sortKey) {
+    const col = COLS.find(c => c.key === sortKey);
+    list = list.slice().sort((a, b) => col.num
+      ? (a[sortKey] - b[sortKey]) * sortDir
+      : a[sortKey].localeCompare(b[sortKey], "vi") * sortDir);
+  }
+  return list;
+}
+
+function render() {
+  const list = filtered();
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+  list.forEach(r => {
+    const tr = document.createElement("tr");
+    COLS.forEach(col => tr.appendChild(cell(r[col.key], col)));
+    tbody.appendChild(tr);
+  });
+
+  // Dòng tổng
+  const sum = k => list.reduce((s, r) => s + r[k], 0);
+  const tf = document.getElementById("tfoot");
+  tf.innerHTML = "";
+  COLS.forEach((col, i) => {
+    const td = document.createElement("td");
+    if (col.num) td.className = "num";
+    if (i === 0) td.textContent = "TỔNG";
+    else if (["t2","t3","t4","ton","tien"].includes(col.key)) td.textContent = fmt(sum(col.key));
+    tf.appendChild(td);
+  });
+
+  document.getElementById("count").textContent = list.length + " / " + rows.length + " mặt hàng";
+}
+
+function updateCards() {
+  const money = k => rows.filter(r => r[k] > 0).length;
+  document.getElementById("cItems").textContent = fmt(rows.length);
+  document.getElementById("cTotal").textContent = fmt(rows.reduce((s, r) => s + r.tien, 0)) + " đ";
+  document.getElementById("c2").textContent = money("t2") + " mặt hàng";
+  document.getElementById("c3").textContent = money("t3") + " mặt hàng";
+  document.getElementById("c4").textContent = money("t4") + " mặt hàng";
+}
+
+function fillUnits() {
+  const sel = document.getElementById("unit");
+  [...new Set(rows.map(r => r.dvt))].sort((a, b) => a.localeCompare(b, "vi"))
+    .forEach(u => { const o = document.createElement("option"); o.value = o.textContent = u; sel.appendChild(o); });
+}
+
+function load(text) {
+  rows = parseCSV(text);
+  document.getElementById("msg").classList.remove("show");
+  fillUnits(); updateCards(); buildHead(); render();
+}
+
+document.getElementById("q").addEventListener("input", render);
+document.getElementById("unit").addEventListener("change", render);
+document.getElementById("onlyOld").addEventListener("change", render);
+document.getElementById("filePick").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (f) f.text().then(load);
+});
+
+buildHead();
+fetch(CSV_FILE + "?v=" + Date.now())
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+  .then(load)
+  .catch(() => document.getElementById("msg").classList.add("show"));
+</script>
+</body>
+</html>
 
