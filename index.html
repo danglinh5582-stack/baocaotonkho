@@ -123,11 +123,41 @@ const fmt = v => {
 };
 const showMsg = t => { $("msg").style.display = "block"; $("msg").innerHTML = t; };
 
+function parseCSV(text) {
+  text = text.replace(/^\uFEFF/, "");
+  const first = text.split(/\r?\n/)[0] || "";
+  const counts = { ",": 0, ";": 0, "\t": 0 };
+  for (const ch of first) if (ch in counts) counts[ch]++;
+  const d = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+  const out = []; let row = [], cur = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === d) { row.push(cur); cur = ""; }
+    else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+      row.push(cur); out.push(row); row = []; cur = "";
+    } else cur += ch;
+  }
+  if (cur !== "" || row.length) { row.push(cur); out.push(row); }
+  return out;
+}
+
 function parseWorkbook(buf) {
   try {
     const wb = XLSX.read(buf, { type: "array" });
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    build(XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" }));
+  } catch (e) {
+    showMsg("Không đọc được file Excel: " + e.message);
+  }
+}
+
+function build(aoa) {
+  try {
     let h = aoa.findIndex(r => r.some(c => String(c).trim().toUpperCase() === "MÃ"));
     if (h < 0) h = 0;
     headers = aoa[h].slice(0, 9).map(String);
@@ -137,7 +167,7 @@ function parseWorkbook(buf) {
     $("dvt").innerHTML = '<option value="">Tất cả ĐVT</option>' + dvts.map(d => `<option>${d}</option>`).join("");
     render();
   } catch (e) {
-    showMsg("Không đọc được file Excel: " + e.message);
+    showMsg("Không đọc được dữ liệu: " + e.message);
   }
 }
 
@@ -196,26 +226,30 @@ function render() {
 ["search", "dvt", "old"].forEach(id => $(id).addEventListener("input", render));
 $("file").addEventListener("change", e => {
   const f = e.target.files[0];
-  if (f) f.arrayBuffer().then(parseWorkbook);
+  if (!f) return;
+  if (/\.csv$/i.test(f.name)) f.text().then(t => build(parseCSV(t)));
+  else f.arrayBuffer().then(parseWorkbook);
 });
 
+async function loadUrl(name) {
+  const r = await fetch(encodeURI(name) + "?t=" + Date.now());
+  if (!r.ok) throw new Error("not found");
+  if (/\.csv$/i.test(name)) build(parseCSV(await r.text()));
+  else parseWorkbook(await r.arrayBuffer());
+}
+
 async function load() {
-  // 1) thử tên file mặc định
+  // 1) thử các tên file mặc định
+  for (const n of ["baocaotonkho.csv", "baocaotonkho.xlsx"]) {
+    try { await loadUrl(n); return; } catch (e) {}
+  }
+  // 2) dò file .csv/.xlsx bất kỳ trong repo
   try {
-    const r = await fetch(encodeURI(EXCEL_FILE) + "?t=" + Date.now());
-    if (r.ok) return parseWorkbook(await r.arrayBuffer());
+    const files = await (await fetch(REPO_API)).json();
+    const x = files.find(f => /\.(csv|xlsx?)$/i.test(f.name));
+    if (x) { await loadUrl(x.name); return; }
   } catch (e) {}
-  // 2) dò file .xlsx bất kỳ trong repo
-  try {
-    const r = await fetch(REPO_API);
-    const files = await r.json();
-    const x = files.find(f => /\.xlsx?$/i.test(f.name));
-    if (x) {
-      const r2 = await fetch(encodeURI(x.name) + "?t=" + Date.now());
-      if (r2.ok) return parseWorkbook(await r2.arrayBuffer());
-    }
-  } catch (e) {}
-  showMsg("Không tìm thấy file Excel trong repo. Hãy tải file <b>baocaotonkho.xlsx</b> lên cùng thư mục với index.html trên GitHub, hoặc bấm <b>Chọn file Excel</b> bên dưới để xem tạm.");
+  showMsg("Không tìm thấy file dữ liệu trong repo. Hãy tải file <b>baocaotonkho.csv</b> lên cùng thư mục với index.html trên GitHub, hoặc bấm <b>Chọn file</b> bên dưới để xem tạm.");
 }
 load();
 </script>
