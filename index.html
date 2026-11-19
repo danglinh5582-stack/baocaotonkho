@@ -4,253 +4,220 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Báo cáo tồn kho</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-  :root {
-    --bg: #f5f6f8; --card: #fff; --text: #1f2430; --muted: #8a90a0;
-    --line: #e4e7ec; --head: #1f3a5f; --accent: #1f6feb;
-    --warn2: #fff4d6; --warn3: #ffe2c2; --warn4: #ffd0d0; --neg: #c62828;
-  }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-         background: var(--bg); color: var(--text); }
-  header { padding: 20px 16px 8px; max-width: 1400px; margin: 0 auto; }
+  body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 16px; }
   h1 { margin: 0 0 4px; font-size: 22px; }
-  .sub { color: var(--muted); font-size: 14px; }
-  .wrap { max-width: 1400px; margin: 0 auto; padding: 8px 16px 40px; }
-
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-           gap: 12px; margin: 12px 0; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
-  .card .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
-  .card .value { font-size: 20px; font-weight: 600; margin-top: 4px; }
-
-  .tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0; }
-  .tools input[type=search], .tools select {
-    padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; background: #fff; }
-  .tools input[type=search] { flex: 1 1 260px; }
-  .tools label { font-size: 14px; display: flex; align-items: center; gap: 6px; }
-  .count { color: var(--muted); font-size: 13px; margin-left: auto; }
-
-  .table-box { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
-               overflow: auto; max-height: 72vh; }
+  .sub { font-size: 13px; color: #666; margin-bottom: 14px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 14px; }
+  .card .lb { font-size: 11px; color: #777; text-transform: uppercase; }
+  .card .vl { font-size: 20px; font-weight: bold; margin-top: 4px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .toolbar input[type=text] { flex: 1; min-width: 220px; padding: 9px 10px; border: 1px solid #bbb; border-radius: 6px; }
+  .toolbar select { padding: 9px; border: 1px solid #bbb; border-radius: 6px; }
+  .toolbar label { font-size: 14px; }
+  .wrap { overflow: auto; max-height: 75vh; border-radius: 8px; border: 1px solid #ddd; background: #fff; }
   table { border-collapse: collapse; width: 100%; font-size: 14px; }
-  th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  td.name { white-space: normal; min-width: 280px; max-width: 460px; }
-  th { position: sticky; top: 0; background: var(--head); color: #fff; text-align: left;
-       cursor: pointer; user-select: none; z-index: 1; }
-  th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
-  th .arrow { opacity: .6; margin-left: 4px; font-size: 11px; }
-  tbody tr:hover { background: #f0f5ff; }
-  .zero { color: #c3c8d2; }
-  .neg { color: var(--neg); font-weight: 600; }
-  .a2 { background: var(--warn2); } .a3 { background: var(--warn3); } .a4 { background: var(--warn4); }
-  tfoot td { position: sticky; bottom: 0; background: #eef2f8; font-weight: 700; }
-
-  .legend { font-size: 13px; color: var(--muted); margin-top: 10px; display: flex; gap: 14px; flex-wrap: wrap; }
-  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px;
-                         margin-right: 6px; vertical-align: -2px; border: 1px solid var(--line); }
-  .legend .l2::before { background: var(--warn2); } .legend .l3::before { background: var(--warn3); }
-  .legend .l4::before { background: var(--warn4); }
-
-  #msg { background: #fff; border: 1px dashed var(--line); border-radius: 10px; padding: 18px; margin: 12px 0; display: none; }
-  #msg.show { display: block; }
+  th, td { padding: 7px 10px; border-bottom: 1px solid #eee; white-space: nowrap; }
+  th { background: #1f3a5f; color: #fff; position: sticky; top: 0; cursor: pointer; text-align: left; user-select: none; }
+  td.num { text-align: right; }
+  td.name { white-space: normal; min-width: 300px; }
+  tr.m2 td { background: #fff8e1; }
+  tr.m3 td { background: #ffe9d6; }
+  tr.m4 td { background: #fde0e0; }
+  tfoot td { font-weight: bold; background: #eee; position: sticky; bottom: 0; }
+  .legend { font-size: 12px; margin: 8px 0; color: #555; }
+  .legend span { display: inline-block; width: 12px; height: 12px; margin: 0 4px 0 12px; vertical-align: middle; border: 1px solid #ccc; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover td { filter: brightness(0.96); }
+  #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 10; align-items: center; justify-content: center; padding: 16px; }
+  #modal.open { display: flex; }
+  .box { background: #fff; border-radius: 10px; width: 100%; max-width: 480px; max-height: 90vh; overflow: auto; padding: 16px; }
+  .box h3 { margin: 0 0 10px; font-size: 17px; line-height: 1.4; }
+  .box .row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 15px; }
+  .box .row span:first-child { color: #666; }
+  .box .row span:last-child { font-weight: bold; text-align: right; }
+  .box button { margin-top: 14px; width: 100%; padding: 10px; border: 0; border-radius: 6px; background: #1f3a5f; color: #fff; font-size: 15px; }
+  @media (max-width: 700px) {
+    .c0, .c3, .c4, .c5, .c7, .c8 { display: none; }
+    td.name { min-width: 0; }
+    .container { padding: 10px; }
+    .toolbar label:last-child { display: none; }
+    .cards { grid-template-columns: repeat(2, 1fr); }
+  }
+  #msg { padding: 12px; background: #fff3cd; border: 1px solid #ffe08a; border-radius: 6px; margin-bottom: 12px; display: none; font-size: 14px; }
 </style>
 </head>
 <body>
-<header>
+<div class="container">
   <h1>Báo cáo tồn kho</h1>
   <div class="sub">Bấm vào tiêu đề cột để sắp xếp. Gõ vào ô tìm kiếm để lọc theo mã hoặc tên hàng.</div>
-</header>
 
-<div class="wrap">
-  <div id="msg">
-    <b>Không tải được file baocaotonkho.csv tự động.</b><br>
-    Nếu bạn mở file index.html trực tiếp từ máy tính thì trình duyệt sẽ chặn việc đọc file.
-    Hãy chọn file CSV thủ công:
-    <input type="file" id="filePick" accept=".csv,text/csv">
-  </div>
+  <div id="msg"></div>
 
   <div class="cards">
-    <div class="card"><div class="label">Số mặt hàng</div><div class="value" id="cItems">0</div></div>
-    <div class="card"><div class="label">Tổng giá trị tồn</div><div class="value" id="cTotal">0</div></div>
-    <div class="card"><div class="label">Hàng tồn trên 2 tháng</div><div class="value" id="c2">0</div></div>
-    <div class="card"><div class="label">Hàng tồn trên 3 tháng</div><div class="value" id="c3">0</div></div>
-    <div class="card"><div class="label">Hàng tồn trên 4 tháng</div><div class="value" id="c4">0</div></div>
+    <div class="card"><div class="lb">Số mặt hàng</div><div class="vl" id="c1">0</div></div>
+    <div class="card"><div class="lb">Tổng giá trị tồn</div><div class="vl" id="c2">0</div></div>
+    <div class="card"><div class="lb">Hàng tồn trên 2 tháng</div><div class="vl" id="c3">0</div></div>
+    <div class="card"><div class="lb">Hàng tồn trên 3 tháng</div><div class="vl" id="c4">0</div></div>
+    <div class="card"><div class="lb">Hàng tồn trên 4 tháng</div><div class="vl" id="c5">0</div></div>
   </div>
 
-  <div class="tools">
-    <input type="search" id="q" placeholder="Tìm theo mã hoặc tên hàng...">
-    <select id="unit"><option value="">Tất cả ĐVT</option></select>
-    <label><input type="checkbox" id="onlyOld"> Chỉ hàng tồn lâu (trên 2/3/4 tháng)</label>
-    <span class="count" id="count"></span>
-  </div>
-
-  <div class="table-box">
-    <table>
-      <thead><tr id="thead"></tr></thead>
-      <tbody id="tbody"></tbody>
-      <tfoot><tr id="tfoot"></tr></tfoot>
-    </table>
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Tìm theo mã hoặc tên hàng...">
+    <select id="dvt"><option value="">Tất cả ĐVT</option></select>
+    <label><input type="checkbox" id="old"> Chỉ hàng tồn lâu (trên 2/3/4 tháng)</label>
+    <label>Chọn file Excel: <input type="file" id="file" accept=".xlsx,.xls"></label>
   </div>
 
   <div class="legend">
-    <span class="l2">Tồn trên 2 tháng</span>
-    <span class="l3">Tồn trên 3 tháng</span>
-    <span class="l4">Tồn trên 4 tháng</span>
+    <span style="background:#fff8e1"></span>Tồn trên 2 tháng
+    <span style="background:#ffe9d6"></span>Tồn trên 3 tháng
+    <span style="background:#fde0e0"></span>Tồn trên 4 tháng
+  </div>
+
+  <div class="wrap">
+    <table>
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
+      <tfoot id="tfoot"></tfoot>
+    </table>
   </div>
 </div>
 
+<div id="modal" onclick="if(event.target===this)closeDetail()"><div class="box" id="box"></div></div>
+
 <script>
-const CSV_FILE = "baocaotonkho.csv";
+const EXCEL_FILE = "baocaotonkho.xlsx";
+const REPO_API = "https://api.github.com/repos/danglinh5582-stack/baocaotonkho/contents/";
+const NUM_COLS = [3, 4, 5, 6, 7, 8];
+const SUM_COLS = [3, 4, 5, 6, 7];
 
-// Cấu hình cột: key, tiêu đề, có phải cột số không
-const COLS = [
-  { key: "ma",   title: "MÃ",                 num: false },
-  { key: "ten",  title: "TÊN HÀNG",           num: false },
-  { key: "dvt",  title: "ĐVT",                num: false },
-  { key: "t2",   title: "TRÊN 2 THÁNG",       num: true, cls: "a2" },
-  { key: "t3",   title: "TRÊN 3 THÁNG",       num: true, cls: "a3" },
-  { key: "t4",   title: "TRÊN 4 THÁNG",       num: true, cls: "a4" },
-  { key: "ton",  title: "TỒN KHO HIỆN TẠI",   num: true },
-  { key: "tien", title: "TỔNG TIỀN",          num: true },
-  { key: "gia",  title: "ĐƠN GIÁ VỐN",        num: true },
-];
+let headers = [], rows = [], current = [], sortCol = -1, sortAsc = true;
 
-let rows = [];
-let sortKey = null, sortDir = 1;
-
-// "1.234.567" -> 1234567 ; " -   " hoặc chữ lạ -> 0
-function toNumber(s) {
-  s = (s || "").trim();
-  if (!/^-?[\d.,]+$/.test(s)) return 0;
-  return Number(s.replace(/\./g, "").replace(",", ".")) || 0;
-}
-const fmt = n => n.toLocaleString("vi-VN");
-
-function parseCSV(text) {
-  text = text.replace(/^﻿/, "");
-  const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
-  lines.shift(); // bỏ dòng tiêu đề
-  return lines.map(line => {
-    const c = line.split(";");
-    return {
-      ma: (c[0] || "").trim(), ten: (c[1] || "").trim(), dvt: (c[2] || "").trim(),
-      t2: toNumber(c[3]), t3: toNumber(c[4]), t4: toNumber(c[5]),
-      ton: toNumber(c[6]), tien: toNumber(c[7]), gia: toNumber(c[8]),
-    };
+function openDetail(r) {
+  let html = `<h3>${r[1]}</h3>`;
+  headers.forEach((h, i) => {
+    if (i === 1) return;
+    html += `<div class="row"><span>${h}</span><span>${NUM_COLS.includes(i) ? fmt(r[i]) : r[i]}</span></div>`;
   });
+  html += `<button onclick="closeDetail()">Đóng</button>`;
+  $("box").innerHTML = html;
+  $("modal").classList.add("open");
 }
+function closeDetail() { $("modal").classList.remove("open"); }
 
-function buildHead() {
-  const tr = document.getElementById("thead");
-  tr.innerHTML = "";
-  COLS.forEach(col => {
-    const th = document.createElement("th");
-    if (col.num) th.className = "num";
-    th.innerHTML = col.title + '<span class="arrow">' +
-      (sortKey === col.key ? (sortDir > 0 ? "▲" : "▼") : "↕") + "</span>";
-    th.onclick = () => {
-      if (sortKey === col.key) sortDir = -sortDir; else { sortKey = col.key; sortDir = 1; }
-      buildHead(); render();
-    };
-    tr.appendChild(th);
-  });
-}
+const $ = id => document.getElementById(id);
+const toNum = v => {
+  if (typeof v === "number") return v;
+  const n = parseFloat(String(v).replace(/\./g, "").replace(",", "."));
+  return isNaN(n) ? 0 : n;
+};
+const fmt = v => {
+  const n = toNum(v);
+  if (v === "" || n === 0) return "-";
+  return n.toLocaleString("vi-VN");
+};
+const showMsg = t => { $("msg").style.display = "block"; $("msg").innerHTML = t; };
 
-function cell(v, col) {
-  const td = document.createElement("td");
-  if (!col.num) {
-    td.textContent = v;
-    if (col.key === "ten") td.className = "name";
-    return td;
+function parseWorkbook(buf) {
+  try {
+    const wb = XLSX.read(buf, { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    let h = aoa.findIndex(r => r.some(c => String(c).trim().toUpperCase() === "MÃ"));
+    if (h < 0) h = 0;
+    headers = aoa[h].slice(0, 9).map(String);
+    rows = aoa.slice(h + 1).filter(r => r.slice(0, 2).some(c => c !== "")).map(r => r.slice(0, 9));
+    $("msg").style.display = "none";
+    const dvts = [...new Set(rows.map(r => String(r[2]).trim()).filter(Boolean))].sort();
+    $("dvt").innerHTML = '<option value="">Tất cả ĐVT</option>' + dvts.map(d => `<option>${d}</option>`).join("");
+    render();
+  } catch (e) {
+    showMsg("Không đọc được file Excel: " + e.message);
   }
-  td.className = "num";
-  if (v === 0) { td.textContent = "-"; td.classList.add("zero"); }
-  else {
-    td.textContent = fmt(v);
-    if (v < 0) td.classList.add("neg");
-    if (col.cls && v > 0) td.classList.add(col.cls);
-  }
-  return td;
-}
-
-function filtered() {
-  const q = document.getElementById("q").value.trim().toLowerCase();
-  const unit = document.getElementById("unit").value;
-  const onlyOld = document.getElementById("onlyOld").checked;
-  let list = rows.filter(r =>
-    (!q || r.ma.toLowerCase().includes(q) || r.ten.toLowerCase().includes(q)) &&
-    (!unit || r.dvt === unit) &&
-    (!onlyOld || r.t2 > 0 || r.t3 > 0 || r.t4 > 0));
-  if (sortKey) {
-    const col = COLS.find(c => c.key === sortKey);
-    list = list.slice().sort((a, b) => col.num
-      ? (a[sortKey] - b[sortKey]) * sortDir
-      : a[sortKey].localeCompare(b[sortKey], "vi") * sortDir);
-  }
-  return list;
 }
 
 function render() {
-  const list = filtered();
-  const tbody = document.getElementById("tbody");
-  tbody.innerHTML = "";
-  list.forEach(r => {
-    const tr = document.createElement("tr");
-    COLS.forEach(col => tr.appendChild(cell(r[col.key], col)));
-    tbody.appendChild(tr);
+  const q = $("search").value.trim().toLowerCase();
+  const dvt = $("dvt").value;
+  const onlyOld = $("old").checked;
+
+  let list = rows.filter(r =>
+    (!q || String(r[0]).toLowerCase().includes(q) || String(r[1]).toLowerCase().includes(q)) &&
+    (!dvt || String(r[2]).trim() === dvt) &&
+    (!onlyOld || toNum(r[3]) > 0 || toNum(r[4]) > 0 || toNum(r[5]) > 0));
+
+  if (sortCol >= 0) {
+    list = [...list].sort((a, b) => {
+      let x = a[sortCol], y = b[sortCol];
+      if (NUM_COLS.includes(sortCol)) { x = toNum(x); y = toNum(y); }
+      else { x = String(x).toLowerCase(); y = String(y).toLowerCase(); }
+      return (x > y ? 1 : x < y ? -1 : 0) * (sortAsc ? 1 : -1);
+    });
+  }
+
+  $("thead").innerHTML = "<tr>" + headers.map((h, i) =>
+    `<th class="c${i}" data-i="${i}">${h}${sortCol === i ? (sortAsc ? " ▲" : " ▼") : ""}</th>`).join("") + "</tr>";
+
+  current = list;
+  $("tbody").innerHTML = list.map((r, idx) => {
+    const cls = toNum(r[5]) > 0 ? "m4" : toNum(r[4]) > 0 ? "m3" : toNum(r[3]) > 0 ? "m2" : "";
+    return `<tr class="${cls}" data-idx="${idx}">` + r.map((c, i) =>
+      `<td class="c${i} ${NUM_COLS.includes(i) ? "num" : i === 1 ? "name" : ""}">${NUM_COLS.includes(i) ? fmt(c) : c}</td>`
+    ).join("") + "</tr>";
+  }).join("");
+
+  const sum = i => list.reduce((s, r) => s + toNum(r[i]), 0);
+  $("tfoot").innerHTML = "<tr>" + headers.map((_, i) =>
+    i === 1 ? `<td class="c1">TỔNG CỘNG</td>` :
+    SUM_COLS.includes(i) ? `<td class="c${i} num">${sum(i).toLocaleString("vi-VN")}</td>` : `<td class="c${i}"></td>`
+  ).join("") + "</tr>";
+
+  document.querySelectorAll("#tbody tr").forEach(tr => tr.onclick = () => openDetail(current[+tr.dataset.idx]));
+
+  $("c1").textContent = list.length.toLocaleString("vi-VN");
+  $("c2").textContent = sum(7).toLocaleString("vi-VN");
+  $("c3").textContent = list.filter(r => toNum(r[3]) > 0).length;
+  $("c4").textContent = list.filter(r => toNum(r[4]) > 0).length;
+  $("c5").textContent = list.filter(r => toNum(r[5]) > 0).length;
+
+  document.querySelectorAll("th").forEach(th => th.onclick = () => {
+    const i = +th.dataset.i;
+    sortAsc = sortCol === i ? !sortAsc : true;
+    sortCol = i;
+    render();
   });
-
-  // Dòng tổng
-  const sum = k => list.reduce((s, r) => s + r[k], 0);
-  const tf = document.getElementById("tfoot");
-  tf.innerHTML = "";
-  COLS.forEach((col, i) => {
-    const td = document.createElement("td");
-    if (col.num) td.className = "num";
-    if (i === 0) td.textContent = "TỔNG";
-    else if (["t2","t3","t4","ton","tien"].includes(col.key)) td.textContent = fmt(sum(col.key));
-    tf.appendChild(td);
-  });
-
-  document.getElementById("count").textContent = list.length + " / " + rows.length + " mặt hàng";
 }
 
-function updateCards() {
-  const money = k => rows.filter(r => r[k] > 0).length;
-  document.getElementById("cItems").textContent = fmt(rows.length);
-  document.getElementById("cTotal").textContent = fmt(rows.reduce((s, r) => s + r.tien, 0)) + " đ";
-  document.getElementById("c2").textContent = money("t2") + " mặt hàng";
-  document.getElementById("c3").textContent = money("t3") + " mặt hàng";
-  document.getElementById("c4").textContent = money("t4") + " mặt hàng";
-}
-
-function fillUnits() {
-  const sel = document.getElementById("unit");
-  [...new Set(rows.map(r => r.dvt))].sort((a, b) => a.localeCompare(b, "vi"))
-    .forEach(u => { const o = document.createElement("option"); o.value = o.textContent = u; sel.appendChild(o); });
-}
-
-function load(text) {
-  rows = parseCSV(text);
-  document.getElementById("msg").classList.remove("show");
-  fillUnits(); updateCards(); buildHead(); render();
-}
-
-document.getElementById("q").addEventListener("input", render);
-document.getElementById("unit").addEventListener("change", render);
-document.getElementById("onlyOld").addEventListener("change", render);
-document.getElementById("filePick").addEventListener("change", e => {
+["search", "dvt", "old"].forEach(id => $(id).addEventListener("input", render));
+$("file").addEventListener("change", e => {
   const f = e.target.files[0];
-  if (f) f.text().then(load);
+  if (f) f.arrayBuffer().then(parseWorkbook);
 });
 
-buildHead();
-fetch(CSV_FILE + "?v=" + Date.now())
-  .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
-  .then(load)
-  .catch(() => document.getElementById("msg").classList.add("show"));
+async function load() {
+  // 1) thử tên file mặc định
+  try {
+    const r = await fetch(encodeURI(EXCEL_FILE) + "?t=" + Date.now());
+    if (r.ok) return parseWorkbook(await r.arrayBuffer());
+  } catch (e) {}
+  // 2) dò file .xlsx bất kỳ trong repo
+  try {
+    const r = await fetch(REPO_API);
+    const files = await r.json();
+    const x = files.find(f => /\.xlsx?$/i.test(f.name));
+    if (x) {
+      const r2 = await fetch(encodeURI(x.name) + "?t=" + Date.now());
+      if (r2.ok) return parseWorkbook(await r2.arrayBuffer());
+    }
+  } catch (e) {}
+  showMsg("Không tìm thấy file Excel trong repo. Hãy tải file <b>baocaotonkho.xlsx</b> lên cùng thư mục với index.html trên GitHub, hoặc bấm <b>Chọn file Excel</b> bên dưới để xem tạm.");
+}
+load();
 </script>
 </body>
 </html>
-
