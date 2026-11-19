@@ -25,9 +25,9 @@
   th { background: #1f3a5f; color: #fff; position: sticky; top: 0; cursor: pointer; text-align: left; user-select: none; }
   td.num { text-align: right; }
   td.name { white-space: normal; min-width: 300px; }
-  tr.m2 td { background: #fff8e1; }
-  tr.m3 td { background: #ffe9d6; }
-  tr.m4 td { background: #fde0e0; }
+  td.m2 { background: #fff3b0; }
+  td.m3 { background: #ffd1a3; }
+  td.m4 { background: #ffb3b3; }
   tfoot td { font-weight: bold; background: #eee; position: sticky; bottom: 0; }
   .legend { font-size: 12px; margin: 8px 0; color: #555; }
   .legend span { display: inline-block; width: 12px; height: 12px; margin: 0 4px 0 12px; vertical-align: middle; border: 1px solid #ccc; }
@@ -195,10 +195,10 @@ function render() {
 
   current = list;
   $("tbody").innerHTML = list.map((r, idx) => {
-    const cls = toNum(r[5]) > 0 ? "m4" : toNum(r[4]) > 0 ? "m3" : toNum(r[3]) > 0 ? "m2" : "";
-    return `<tr class="${cls}" data-idx="${idx}">` + r.map((c, i) =>
-      `<td class="c${i} ${NUM_COLS.includes(i) ? "num" : i === 1 ? "name" : ""}">${NUM_COLS.includes(i) ? fmt(c) : c}</td>`
-    ).join("") + "</tr>";
+    return `<tr data-idx="${idx}">` + r.map((c, i) => {
+      const hl = (i >= 3 && i <= 5 && toNum(c) > 0) ? " m" + (i - 1) : "";
+      return `<td class="c${i} ${NUM_COLS.includes(i) ? "num" : i === 1 ? "name" : ""}${hl}">${NUM_COLS.includes(i) ? fmt(c) : c}</td>`;
+    }).join("") + "</tr>";
   }).join("");
 
   const sum = i => list.reduce((s, r) => s + toNum(r[i]), 0);
