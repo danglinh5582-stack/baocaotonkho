@@ -185,7 +185,10 @@ function render() {
     list = [...list].sort((a, b) => {
       let x = a[sortCol], y = b[sortCol];
       if (NUM_COLS.includes(sortCol)) { x = toNum(x); y = toNum(y); }
-      else { x = String(x).toLowerCase(); y = String(y).toLowerCase(); }
+      else {
+        const c = String(x).localeCompare(String(y), "vi", { sensitivity: "base", numeric: true });
+        return sortAsc ? c : -c;
+      }
       return (x > y ? 1 : x < y ? -1 : 0) * (sortAsc ? 1 : -1);
     });
   }
@@ -217,8 +220,15 @@ function render() {
 
   document.querySelectorAll("th").forEach(th => th.onclick = () => {
     const i = +th.dataset.i;
-    sortAsc = sortCol === i ? !sortAsc : true;
-    sortCol = i;
+    if (sortCol !== i) {          // lần 1: A → Z (số: nhỏ → lớn)
+      sortCol = i;
+      sortAsc = true;
+    } else if (sortAsc) {         // lần 2: Z → A (số: lớn → nhỏ)
+      sortAsc = false;
+    } else {                      // lần 3: về thứ tự ban đầu
+      sortCol = -1;
+      sortAsc = true;
+    }
     render();
   });
 }
