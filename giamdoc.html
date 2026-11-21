@@ -8,7 +8,7 @@
 <style>
   * { box-sizing: border-box; }
   body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
-  .container { max-width: 1300px; margin: 0 auto; padding: 16px; }
+  .container { max-width: 1900px; margin: 0 auto; padding: 12px 14px; }
   .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
   h1 { margin: 0 0 4px; font-size: 22px; }
   .sub { font-size: 13px; color: #666; margin-bottom: 14px; }
@@ -28,15 +28,16 @@
   .toolbar .btn { padding: 9px 12px; border: 1px solid #bbb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; }
   .wrap { overflow: auto; max-height: 75vh; border-radius: 8px; border: 1px solid #ddd; background: #fff; }
   table { border-collapse: collapse; width: 100%; font-size: 14px; }
-  th, td { padding: 7px 10px; border-bottom: 1px solid #eee; white-space: nowrap; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid #eee; white-space: nowrap; }
   th { background: #1f3a5f; color: #fff; position: sticky; top: 0; cursor: pointer; text-align: left; user-select: none; }
   td.num { text-align: right; }
-  td.name { white-space: normal; min-width: 300px; }
+  td.name { white-space: normal; min-width: 220px; }
   td.price { font-weight: bold; color: #0b5d1e; }
   td.m2 { background: #fff3b0; }
   td.m3 { background: #ffd1a3; }
   td.m4 { background: #ffb3b3; }
-  .noprice { font-size: 11px; font-weight: normal; color: #b00020; white-space: normal; display: inline-block; max-width: 190px; text-align: right; }
+  .noprice { font-size: 12px; font-weight: normal; color: #b00020; white-space: nowrap; }
+  .box .noprice { white-space: normal; }
   tfoot td { font-weight: bold; background: #eee; position: sticky; bottom: 0; }
   .legend { font-size: 12px; margin: 8px 0; color: #555; }
   .legend span { display: inline-block; width: 12px; height: 12px; margin: 0 4px 0 12px; vertical-align: middle; border: 1px solid #ccc; }
@@ -66,9 +67,16 @@
   .hint { font-size: 13px; color: #777; margin-top: 10px; }
   .err { color: #c62828; font-size: 13px; margin-top: 8px; }
   @media (max-width: 700px) {
-    body.dir .c0, body.dir .c3, body.dir .c4, body.dir .c5, body.dir .c7, body.dir .c8 { display: none; }
-    td.name { min-width: 0; white-space: normal; }
-    .container { padding: 10px; }
+    .c0, .c3, .c4, .c5, .c7, .c8 { display: none; }
+    table { table-layout: fixed; font-size: 13px; }
+    th, td { padding: 6px 4px; white-space: normal; word-break: break-word; }
+    th { font-size: 11px; }
+    th.c2, td.c2 { width: 46px; }
+    th.c6, td.c6 { width: 54px; }
+    th.c9, td.c9 { width: 86px; }
+    td.name { min-width: 0; }
+    .noprice { font-size: 11px; white-space: normal; }
+    .container { padding: 8px; }
     .cards { grid-template-columns: repeat(2, 1fr); }
     .top { flex-direction: column; }
   }
@@ -140,6 +148,8 @@ const CONFIG = {
 const MODE = CONFIG.MODE;
 
 const KEYS = ["MÃ HÀNG","TÊN HÀNG","ĐVT","TRÊN 2 THÁNG","TRÊN 3 THÁNG","TRÊN 4 THÁNG","TỒN KHO CUỐI THÁNG","GIÁ TRỊ","ĐƠN GIÁ VỐN","GIÁ BÁN ĐẠI LÝ"];
+const LABELS = KEYS.slice(); LABELS[6] = "TỒN KHO";
+const ALIAS = {"MÃ HÀNG":"MÃ","TỒN KHO CUỐI THÁNG":"TỒN KHO"}; // tên cũ/ngắn trong Google Sheet đều đọc được
 const DIR_COLS = [0,1,2,3,4,5,6,7,8,9];
 const SALES_COLS = [0,1,2,6,9];
 const NUM_COLS = [3,4,5,6,7,8,9];
@@ -188,12 +198,12 @@ const fmt = v => {
 const money = n => Math.round(n).toLocaleString("vi-VN");
 const showMsg = t => { $("msg").style.display = "block"; $("msg").innerHTML = t; };
 
-function cell(r, i) {
+function cell(r, i, short) {
   const c = r[i];
   if (i === DEALER) {
     if (toNum(c) !== 0) return fmt(c);
     const t = String(c ?? "").trim();
-    return t ? `<span class="noprice">${esc(t)}</span>` : "-";
+    return t ? `<span class="noprice">${esc(short ? "Chưa có giá" : t)}</span>` : "-";
   }
   return NUM_COLS.includes(i) ? fmt(c) : esc(c);
 }
@@ -238,12 +248,12 @@ function openDetail(r) {
   let html = `<h3>${esc(r[1])}</h3>`;
   cols().forEach(i => {
     if (i === 1) return;
-    html += `<div class="row"><span>${KEYS[i]}</span><span>${cell(r, i)}</span></div>`;
+    html += `<div class="row"><span>${LABELS[i]}</span><span>${cell(r, i)}</span></div>`;
   });
   if (isDir) {
     html += `<div class="calc"><h4>Tính lợi nhuận dự kiến</h4>
       <label>Giá bán dự kiến (đã gồm VAT)</label>
-      <input id="px" inputmode="decimal" placeholder="Nhập giá bán..." value="${toNum(r[DEALER]) > 0 ? toNum(r[DEALER]).toLocaleString("vi-VN") : ""}" oninput="calc()" onblur="fmtPx()">
+      <input id="px" inputmode="numeric" autocomplete="off" placeholder="Nhập giá bán..." value="${toNum(r[DEALER]) > 0 ? dotFmt(String(Math.round(toNum(r[DEALER])))) : ""}" oninput="pxInput(this)">
       <div class="hint" style="margin-top:4px">Mặc định lấy Giá bán đại lý (đã gồm VAT), có thể sửa.</div>
       <label>Thuế VAT</label>
       <select id="vat" onchange="lastVat=+this.value;calc()">
@@ -260,9 +270,19 @@ function closeDetail() {
   if (MODE === "director" && !isDir) return; // chưa đăng nhập thì không đóng được
   $("modal").classList.remove("open");
 }
-function fmtPx() { const n = toNum($("px").value); if (n) $("px").value = n.toLocaleString("vi-VN"); }
+const dotFmt = d => d.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+function pxInput(el) {
+  const pos = el.selectionStart ?? el.value.length;
+  const digitsBefore = el.value.slice(0, pos).replace(/\D/g, "").length;
+  const digits = el.value.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+  el.value = dotFmt(digits);
+  let p = 0, seen = 0;                       // đặt lại con trỏ đúng chỗ đang gõ
+  while (p < el.value.length && seen < digitsBefore) { if (/\d/.test(el.value[p])) seen++; p++; }
+  try { el.setSelectionRange(p, p); } catch (e) {}
+  calc();
+}
 function calc() {
-  const p = toNum($("px").value), v = +$("vat").value, cost = toNum(curRec[COST]);
+  const p = parseInt($("px").value.replace(/\D/g, ""), 10) || 0, v = +$("vat").value, cost = toNum(curRec[COST]);
   const out = $("res");
   if (!p) { out.innerHTML = `<div class="hint">Nhập giá bán để xem % lợi nhuận.<br>Công thức: (Doanh thu chưa VAT − Giá vốn) / Giá vốn</div>`; return; }
   const net = p / (1 + v / 100), profit = net - cost;
@@ -326,7 +346,7 @@ function build(aoa) {
     // Ghép cột theo TÊN tiêu đề (an toàn khi sheet đổi thứ tự cột hoặc bị bớt cột)
     const map = KEYS.map((k, i) => {
       let j = hd.indexOf(k);
-      if (j < 0 && k === "MÃ HÀNG") j = hd.indexOf("MÃ");
+      if (j < 0 && ALIAS[k]) j = hd.indexOf(ALIAS[k]);
       if (j < 0 && hd.length >= 10) j = i;
       return j;
     });
@@ -371,14 +391,14 @@ function render() {
   }
 
   $("thead").innerHTML = "<tr>" + C.map(i =>
-    `<th class="c${i}" data-i="${i}">${KEYS[i]}${sortCol === i ? (sortAsc ? " ▲" : " ▼") : ""}</th>`).join("") + "</tr>";
+    `<th class="c${i}" data-i="${i}">${LABELS[i]}${sortCol === i ? (sortAsc ? " ▲" : " ▼") : ""}</th>`).join("") + "</tr>";
 
   current = list;
   $("tbody").innerHTML = list.map((r, idx) =>
     `<tr data-idx="${idx}">` + C.map(i => {
       const hl = (i >= 3 && i <= 5 && toNum(r[i]) > 0) ? " m" + (i - 1) : "";
       const cls = NUM_COLS.includes(i) ? "num" : i === 1 ? "name" : "";
-      return `<td class="c${i} ${cls}${i === DEALER ? " price" : ""}${hl}">${cell(r, i)}</td>`;
+      return `<td class="c${i} ${cls}${i === DEALER ? " price" : ""}${hl}">${cell(r, i, true)}</td>`;
     }).join("") + "</tr>").join("");
 
   if (isDir) {
