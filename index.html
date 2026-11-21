@@ -9,8 +9,14 @@
   * { box-sizing: border-box; }
   body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
   .container { max-width: 1300px; margin: 0 auto; padding: 16px; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
   h1 { margin: 0 0 4px; font-size: 22px; }
   .sub { font-size: 13px; color: #666; margin-bottom: 14px; }
+  .roles { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  .roles button { padding: 7px 12px; border: 1px solid #1f3a5f; background: #fff; color: #1f3a5f; border-radius: 6px; font-size: 13px; cursor: pointer; }
+  .roles button.primary { background: #1f3a5f; color: #fff; }
+  .badge { font-size: 12px; padding: 4px 8px; border-radius: 12px; background: #e3f2e1; color: #256029; }
+  body.sales .badge { background: #e8eef7; color: #1f3a5f; }
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 14px; }
   .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 14px; }
   .card .lb { font-size: 11px; color: #777; text-transform: uppercase; }
@@ -19,46 +25,73 @@
   .toolbar input[type=text] { flex: 1; min-width: 220px; padding: 9px 10px; border: 1px solid #bbb; border-radius: 6px; }
   .toolbar select { padding: 9px; border: 1px solid #bbb; border-radius: 6px; }
   .toolbar label { font-size: 14px; }
+  .toolbar .btn { padding: 9px 12px; border: 1px solid #bbb; background: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; }
   .wrap { overflow: auto; max-height: 75vh; border-radius: 8px; border: 1px solid #ddd; background: #fff; }
   table { border-collapse: collapse; width: 100%; font-size: 14px; }
   th, td { padding: 7px 10px; border-bottom: 1px solid #eee; white-space: nowrap; }
   th { background: #1f3a5f; color: #fff; position: sticky; top: 0; cursor: pointer; text-align: left; user-select: none; }
   td.num { text-align: right; }
   td.name { white-space: normal; min-width: 300px; }
+  td.price { font-weight: bold; color: #0b5d1e; }
   td.m2 { background: #fff3b0; }
   td.m3 { background: #ffd1a3; }
   td.m4 { background: #ffb3b3; }
+  .noprice { font-size: 11px; font-weight: normal; color: #b00020; white-space: normal; display: inline-block; max-width: 190px; text-align: right; }
   tfoot td { font-weight: bold; background: #eee; position: sticky; bottom: 0; }
   .legend { font-size: 12px; margin: 8px 0; color: #555; }
   .legend span { display: inline-block; width: 12px; height: 12px; margin: 0 4px 0 12px; vertical-align: middle; border: 1px solid #ccc; }
   tbody tr { cursor: pointer; }
   tbody tr:hover td { filter: brightness(0.96); }
+  body.sales .dir-only { display: none !important; }
+  body.locked .container > :not(.top) { display: none !important; }
+  body.locked .sub { display: none; }
   #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 10; align-items: center; justify-content: center; padding: 16px; }
   #modal.open { display: flex; }
   .box { background: #fff; border-radius: 10px; width: 100%; max-width: 480px; max-height: 90vh; overflow: auto; padding: 16px; }
   .box h3 { margin: 0 0 10px; font-size: 17px; line-height: 1.4; }
+  .box h4 { margin: 16px 0 8px; font-size: 15px; color: #1f3a5f; }
   .box .row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 15px; }
   .box .row span:first-child { color: #666; }
   .box .row span:last-child { font-weight: bold; text-align: right; }
-  .box button { margin-top: 14px; width: 100%; padding: 10px; border: 0; border-radius: 6px; background: #1f3a5f; color: #fff; font-size: 15px; }
+  .box button { margin-top: 14px; width: 100%; padding: 10px; border: 0; border-radius: 6px; background: #1f3a5f; color: #fff; font-size: 15px; cursor: pointer; }
+  .box button.ghost { background: #e6e9ee; color: #333; margin-top: 8px; }
+  .calc { background: #f6f9fc; border: 1px solid #d9e3ee; border-radius: 8px; padding: 12px; margin-top: 14px; }
+  .calc h4 { margin-top: 0; }
+  .calc label { display: block; font-size: 13px; color: #555; margin: 10px 0 4px; }
+  .calc input, .calc select, .login input { width: 100%; padding: 10px; border: 1px solid #bbb; border-radius: 6px; font-size: 16px; }
+  .res .row { font-size: 14px; }
+  .res .pct { font-size: 20px; }
+  .pos { color: #0b7a2b; }
+  .neg { color: #c62828; }
+  .hint { font-size: 13px; color: #777; margin-top: 10px; }
+  .err { color: #c62828; font-size: 13px; margin-top: 8px; }
   @media (max-width: 700px) {
-    .c0, .c3, .c4, .c5, .c7, .c8 { display: none; }
-    td.name { min-width: 0; }
+    body.dir .c0, body.dir .c3, body.dir .c4, body.dir .c5, body.dir .c7, body.dir .c8 { display: none; }
+    td.name { min-width: 0; white-space: normal; }
     .container { padding: 10px; }
-    .toolbar label:last-child { display: none; }
     .cards { grid-template-columns: repeat(2, 1fr); }
+    .top { flex-direction: column; }
   }
   #msg { padding: 12px; background: #fff3cd; border: 1px solid #ffe08a; border-radius: 6px; margin-bottom: 12px; display: none; font-size: 14px; }
 </style>
 </head>
-<body>
+<body class="sales">
 <div class="container">
-  <h1>Báo cáo tồn kho</h1>
-  <div class="sub">Bấm vào tiêu đề cột để sắp xếp. Gõ vào ô tìm kiếm để lọc theo mã hoặc tên hàng.</div>
+  <div class="top">
+    <div>
+      <h1>Báo cáo tồn kho</h1>
+      <div class="sub">Bấm vào tiêu đề cột để sắp xếp. Gõ vào ô tìm kiếm để lọc theo mã hoặc tên hàng. <span id="stamp"></span></div>
+    </div>
+    <div class="roles">
+      <span class="badge" id="badge">Nhân viên kinh doanh</span>
+      <button class="primary" id="btnLogin" onclick="openLogin()">Đăng nhập Giám đốc</button>
+      <button id="btnLogout" onclick="logout()" style="display:none">Đăng xuất</button>
+    </div>
+  </div>
 
   <div id="msg"></div>
 
-  <div class="cards">
+  <div class="cards dir-only">
     <div class="card"><div class="lb">Số mặt hàng</div><div class="vl" id="c1">0</div></div>
     <div class="card"><div class="lb">Tổng giá trị tồn</div><div class="vl" id="c2">0</div></div>
     <div class="card"><div class="lb">Hàng tồn trên 2 tháng</div><div class="vl" id="c3">0</div></div>
@@ -69,11 +102,12 @@
   <div class="toolbar">
     <input type="text" id="search" placeholder="Tìm theo mã hoặc tên hàng...">
     <select id="dvt"><option value="">Tất cả ĐVT</option></select>
-    <label><input type="checkbox" id="old"> Chỉ hàng tồn lâu (trên 2/3/4 tháng)</label>
-    <label>Chọn file Excel: <input type="file" id="file" accept=".xlsx,.xls"></label>
+    <button class="btn" onclick="load()">↻ Cập nhật</button>
+    <label class="dir-only"><input type="checkbox" id="old"> Chỉ hàng tồn lâu (trên 2/3/4 tháng)</label>
+    <label class="dir-only">Chọn file Excel/CSV: <input type="file" id="file" accept=".xlsx,.xls,.csv"></label>
   </div>
 
-  <div class="legend">
+  <div class="legend dir-only">
     <span style="background:#fff3b0"></span>Tồn trên 2 tháng
     <span style="background:#ffd1a3"></span>Tồn trên 3 tháng
     <span style="background:#ffb3b3"></span>Tồn trên 4 tháng
@@ -83,7 +117,7 @@
     <table>
       <thead id="thead"></thead>
       <tbody id="tbody"></tbody>
-      <tfoot id="tfoot"></tfoot>
+      <tfoot id="tfoot" class="dir-only"></tfoot>
     </table>
   </div>
 </div>
@@ -91,28 +125,35 @@
 <div id="modal" onclick="if(event.target===this)closeDetail()"><div class="box" id="box"></div></div>
 
 <script>
-const EXCEL_FILE = "baocaotonkho.xlsx";
-const REPO_API = "https://api.github.com/repos/danglinh5582-stack/baocaotonkho/contents/";
-const NUM_COLS = [3, 4, 5, 6, 7, 8];
-const SUM_COLS = [3, 4, 5, 6, 7];
+// ================= CẤU HÌNH =================
+const CONFIG = {
+  DIRECTOR_CSV: "",
+  // Link CSV của tab dành cho nhân viên kinh doanh
+  SALES_CSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT2R-MMtUeTyplxahuWl2AwXEKwMNZfZ2SJDc2trWFs7S2HCLYv45MZUX6JrcEAQw/pub?gid=372558186&single=true&output=csv",
+  // Mật khẩu Giám đốc
+  PIN: "",
+  // "director" = trang Giám đốc (phải đăng nhập) | "sales" = trang nhân viên kinh doanh
+  MODE: "sales"
+};
+const MODE = CONFIG.MODE;
 
-let headers = [], rows = [], current = [], sortCol = -1, sortAsc = true;
-
-function openDetail(r) {
-  let html = `<h3>${r[1]}</h3>`;
-  headers.forEach((h, i) => {
-    if (i === 1) return;
-    html += `<div class="row"><span>${h}</span><span>${NUM_COLS.includes(i) ? fmt(r[i]) : r[i]}</span></div>`;
-  });
-  html += `<button onclick="closeDetail()">Đóng</button>`;
-  $("box").innerHTML = html;
-  $("modal").classList.add("open");
-}
-function closeDetail() { $("modal").classList.remove("open"); }
+const KEYS = ["MÃ HÀNG","TÊN HÀNG","ĐVT","TRÊN 2 THÁNG","TRÊN 3 THÁNG","TRÊN 4 THÁNG","TỒN KHO CUỐI THÁNG","GIÁ TRỊ","ĐƠN GIÁ VỐN","GIÁ BÁN ĐẠI LÝ"];
+const DIR_COLS = [0,1,2,3,4,5,6,7,8,9];
+const SALES_COLS = [0,1,2,6,9];
+const NUM_COLS = [3,4,5,6,7,8,9];
+const SUM_COLS = [3,4,5,6,7];
+const COST = 8, DEALER = 9;
 
 const $ = id => document.getElementById(id);
-// Đọc được cả hai kiểu ghi số:
-//   kiểu Việt Nam: 388.937 và 6,5      kiểu Excel quốc tế: " 388,937 " và 319,444.44
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s ?? "").replace(/\s+/g, " ").trim().toUpperCase();
+
+let rows = [], current = [], sortCol = -1, sortAsc = true, curRec = null, lastVat = 8;
+let isDir = false;
+if (MODE === "director") { try { isDir = sessionStorage.getItem("dir") === "1"; } catch (e) {} }
+const cols = () => isDir ? DIR_COLS : SALES_COLS;
+
+// Đọc được cả hai kiểu ghi số: 388.937 / 6,5 / " 388,937 " / 319,444.44 / (136.000) / -34.000
 const toNum = v => {
   if (typeof v === "number") return v;
   let s = String(v ?? "").replace(/[\s\u00a0'"]/g, "");
@@ -142,8 +183,102 @@ const fmt = v => {
   if (v === "" || n === 0) return "-";
   return n.toLocaleString("vi-VN");
 };
+const money = n => Math.round(n).toLocaleString("vi-VN");
 const showMsg = t => { $("msg").style.display = "block"; $("msg").innerHTML = t; };
 
+function cell(r, i) {
+  const c = r[i];
+  if (i === DEALER) {
+    if (toNum(c) !== 0) return fmt(c);
+    const t = String(c ?? "").trim();
+    return t ? `<span class="noprice">${esc(t)}</span>` : "-";
+  }
+  return NUM_COLS.includes(i) ? fmt(c) : esc(c);
+}
+
+// ================= PHÂN QUYỀN =================
+function applyRole() {
+  const locked = MODE === "director" && !isDir;
+  document.body.className = locked ? "sales locked" : (isDir ? "dir" : "sales");
+  $("badge").textContent = MODE === "sales" ? "Nhân viên kinh doanh" : "Giám đốc (xem đầy đủ)";
+  $("badge").style.display = locked ? "none" : "";
+  $("btnLogin").style.display = "none";
+  $("btnLogout").style.display = (MODE === "director" && isDir) ? "" : "none";
+  document.title = MODE === "sales" ? "Báo cáo tồn kho" : "Báo cáo tồn kho - Giám đốc";
+  sortCol = -1; sortAsc = true;
+}
+function openLogin() {
+  $("box").innerHTML = `<div class="login"><h3>Đăng nhập Giám đốc</h3>
+    <input type="password" id="pin" placeholder="Nhập mật khẩu" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="err" id="loginErr"></div>
+    <button onclick="doLogin()">Đăng nhập</button></div>`;
+  $("modal").classList.add("open");
+  setTimeout(() => $("pin").focus(), 50);
+}
+function doLogin() {
+  if ($("pin").value === CONFIG.PIN) {
+    isDir = true;
+    try { sessionStorage.setItem("dir", "1"); } catch (e) {}
+    closeDetail(); applyRole(); load();
+  } else {
+    $("loginErr").textContent = "Sai mật khẩu.";
+  }
+}
+function logout() {
+  isDir = false;
+  try { sessionStorage.removeItem("dir"); } catch (e) {}
+  rows = []; applyRole(); render(); openLogin();
+}
+
+// ================= CHI TIẾT + TÍNH LỢI NHUẬN =================
+function openDetail(r) {
+  curRec = r;
+  let html = `<h3>${esc(r[1])}</h3>`;
+  cols().forEach(i => {
+    if (i === 1) return;
+    html += `<div class="row"><span>${KEYS[i]}</span><span>${cell(r, i)}</span></div>`;
+  });
+  if (isDir) {
+    html += `<div class="calc"><h4>Tính lợi nhuận dự kiến</h4>
+      <label>Giá bán dự kiến (đã gồm VAT)</label>
+      <input id="px" inputmode="decimal" placeholder="Nhập giá bán..." value="${toNum(r[DEALER]) > 0 ? toNum(r[DEALER]).toLocaleString("vi-VN") : ""}" oninput="calc()" onblur="fmtPx()">
+      <div class="hint" style="margin-top:4px">Mặc định lấy Giá bán đại lý (đã gồm VAT), có thể sửa.</div>
+      <label>Thuế VAT</label>
+      <select id="vat" onchange="lastVat=+this.value;calc()">
+        ${[0,5,8,10].map(v => `<option value="${v}"${v === lastVat ? " selected" : ""}>${v}%</option>`).join("")}
+      </select>
+      <div class="res" id="res"></div></div>`;
+  }
+  html += `<button onclick="closeDetail()">Đóng</button>`;
+  $("box").innerHTML = html;
+  $("modal").classList.add("open");
+  if (isDir) calc();
+}
+function closeDetail() {
+  if (MODE === "director" && !isDir) return; // chưa đăng nhập thì không đóng được
+  $("modal").classList.remove("open");
+}
+function fmtPx() { const n = toNum($("px").value); if (n) $("px").value = n.toLocaleString("vi-VN"); }
+function calc() {
+  const p = toNum($("px").value), v = +$("vat").value, cost = toNum(curRec[COST]);
+  const out = $("res");
+  if (!p) { out.innerHTML = `<div class="hint">Nhập giá bán để xem % lợi nhuận.<br>Công thức: (Doanh thu chưa VAT − Giá vốn) / Giá vốn</div>`; return; }
+  const net = p / (1 + v / 100), profit = net - cost;
+  let pct;
+  if (cost > 0) {
+    const x = profit / cost * 100;
+    pct = `<span class="${x >= 0 ? "pos" : "neg"} pct">${x.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%</span>`;
+  } else {
+    pct = `<span class="neg">Không tính được (giá vốn ≤ 0)</span>`;
+  }
+  out.innerHTML = `
+    <div class="row"><span>Doanh thu chưa VAT</span><span>${money(net)}</span></div>
+    <div class="row"><span>Giá vốn</span><span>${money(cost)}</span></div>
+    <div class="row"><span>Lãi / đơn vị</span><span class="${profit >= 0 ? "pos" : "neg"}">${money(profit)}</span></div>
+    <div class="row"><span>% Lợi nhuận</span><span>${pct}</span></div>`;
+}
+
+// ================= ĐỌC DỮ LIỆU =================
 function parseCSV(text) {
   text = text.replace(/^\uFEFF/, "");
   const first = text.split(/\r?\n/)[0] || "";
@@ -183,23 +318,38 @@ function parseWorkbook(buf) {
 
 function build(aoa) {
   try {
-    let h = aoa.findIndex(r => r.some(c => String(c).trim().toUpperCase() === "MÃ"));
+    let h = aoa.findIndex(r => r.some(c => ["MÃ HÀNG", "MÃ"].includes(norm(c))));
     if (h < 0) h = 0;
-    headers = aoa[h].slice(0, 9).map(String);
-    rows = aoa.slice(h + 1).filter(r => r.slice(0, 2).some(c => String(c).trim() !== "")).map(r => r.slice(0, 9));
+    const hd = aoa[h].map(norm);
+    // Ghép cột theo TÊN tiêu đề (an toàn khi sheet đổi thứ tự cột hoặc bị bớt cột)
+    const map = KEYS.map((k, i) => {
+      let j = hd.indexOf(k);
+      if (j < 0 && k === "MÃ HÀNG") j = hd.indexOf("MÃ");
+      if (j < 0 && hd.length >= 10) j = i;
+      return j;
+    });
+    rows = aoa.slice(h + 1)
+      .map(r => map.map(j => j >= 0 ? (r[j] ?? "") : ""))
+      .filter(r => String(r[0]).trim() || String(r[1]).trim());
     $("msg").style.display = "none";
     const dvts = [...new Set(rows.map(r => String(r[2]).trim()).filter(Boolean))].sort();
-    $("dvt").innerHTML = '<option value="">Tất cả ĐVT</option>' + dvts.map(d => `<option>${d}</option>`).join("");
+    const keep = $("dvt").value;
+    $("dvt").innerHTML = '<option value="">Tất cả ĐVT</option>' + dvts.map(d => `<option>${esc(d)}</option>`).join("");
+    if (dvts.includes(keep)) $("dvt").value = keep;
+    const t = new Date();
+    $("stamp").textContent = "Cập nhật lúc " + t.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) + ".";
     render();
   } catch (e) {
     showMsg("Không đọc được dữ liệu: " + e.message);
   }
 }
 
+// ================= HIỂN THỊ =================
 function render() {
   const q = $("search").value.trim().toLowerCase();
   const dvt = $("dvt").value;
-  const onlyOld = $("old").checked;
+  const onlyOld = isDir && $("old").checked;
+  const C = cols();
 
   let list = rows.filter(r =>
     (!q || String(r[0]).toLowerCase().includes(q) || String(r[1]).toLowerCase().includes(q)) &&
@@ -218,42 +368,38 @@ function render() {
     });
   }
 
-  $("thead").innerHTML = "<tr>" + headers.map((h, i) =>
-    `<th class="c${i}" data-i="${i}">${h}${sortCol === i ? (sortAsc ? " ▲" : " ▼") : ""}</th>`).join("") + "</tr>";
+  $("thead").innerHTML = "<tr>" + C.map(i =>
+    `<th class="c${i}" data-i="${i}">${KEYS[i]}${sortCol === i ? (sortAsc ? " ▲" : " ▼") : ""}</th>`).join("") + "</tr>";
 
   current = list;
-  $("tbody").innerHTML = list.map((r, idx) => {
-    return `<tr data-idx="${idx}">` + r.map((c, i) => {
-      const hl = (i >= 3 && i <= 5 && toNum(c) > 0) ? " m" + (i - 1) : "";
-      return `<td class="c${i} ${NUM_COLS.includes(i) ? "num" : i === 1 ? "name" : ""}${hl}">${NUM_COLS.includes(i) ? fmt(c) : c}</td>`;
-    }).join("") + "</tr>";
-  }).join("");
+  $("tbody").innerHTML = list.map((r, idx) =>
+    `<tr data-idx="${idx}">` + C.map(i => {
+      const hl = (i >= 3 && i <= 5 && toNum(r[i]) > 0) ? " m" + (i - 1) : "";
+      const cls = NUM_COLS.includes(i) ? "num" : i === 1 ? "name" : "";
+      return `<td class="c${i} ${cls}${i === DEALER ? " price" : ""}${hl}">${cell(r, i)}</td>`;
+    }).join("") + "</tr>").join("");
 
-  const sum = i => list.reduce((s, r) => s + toNum(r[i]), 0);
-  $("tfoot").innerHTML = "<tr>" + headers.map((_, i) =>
-    i === 1 ? `<td class="c1">TỔNG CỘNG</td>` :
-    SUM_COLS.includes(i) ? `<td class="c${i} num">${sum(i).toLocaleString("vi-VN")}</td>` : `<td class="c${i}"></td>`
-  ).join("") + "</tr>";
+  if (isDir) {
+    const sum = i => list.reduce((s, r) => s + toNum(r[i]), 0);
+    $("tfoot").innerHTML = "<tr>" + C.map(i =>
+      i === 1 ? `<td class="c1">TỔNG CỘNG</td>` :
+      SUM_COLS.includes(i) ? `<td class="c${i} num">${sum(i).toLocaleString("vi-VN")}</td>` : `<td class="c${i}"></td>`
+    ).join("") + "</tr>";
+    $("c1").textContent = list.length.toLocaleString("vi-VN");
+    $("c2").textContent = sum(7).toLocaleString("vi-VN");
+    $("c3").textContent = list.filter(r => toNum(r[3]) > 0).length;
+    $("c4").textContent = list.filter(r => toNum(r[4]) > 0).length;
+    $("c5").textContent = list.filter(r => toNum(r[5]) > 0).length;
+  } else {
+    $("tfoot").innerHTML = "";
+  }
 
   document.querySelectorAll("#tbody tr").forEach(tr => tr.onclick = () => openDetail(current[+tr.dataset.idx]));
-
-  $("c1").textContent = list.length.toLocaleString("vi-VN");
-  $("c2").textContent = sum(7).toLocaleString("vi-VN");
-  $("c3").textContent = list.filter(r => toNum(r[3]) > 0).length;
-  $("c4").textContent = list.filter(r => toNum(r[4]) > 0).length;
-  $("c5").textContent = list.filter(r => toNum(r[5]) > 0).length;
-
   document.querySelectorAll("th").forEach(th => th.onclick = () => {
     const i = +th.dataset.i;
-    if (sortCol !== i) {          // lần 1: A → Z (số: nhỏ → lớn)
-      sortCol = i;
-      sortAsc = true;
-    } else if (sortAsc) {         // lần 2: Z → A (số: lớn → nhỏ)
-      sortAsc = false;
-    } else {                      // lần 3: về thứ tự ban đầu
-      sortCol = -1;
-      sortAsc = true;
-    }
+    if (sortCol !== i) { sortCol = i; sortAsc = true; }      // lần 1: A→Z / nhỏ→lớn
+    else if (sortAsc) { sortAsc = false; }                    // lần 2: Z→A / lớn→nhỏ
+    else { sortCol = -1; sortAsc = true; }                    // lần 3: thứ tự ban đầu
     render();
   });
 }
@@ -266,27 +412,24 @@ $("file").addEventListener("change", e => {
   else f.arrayBuffer().then(parseWorkbook);
 });
 
-async function loadUrl(name) {
-  const r = await fetch(encodeURI(name) + "?t=" + Date.now());
-  if (!r.ok) throw new Error("not found");
-  if (/\.csv$/i.test(name)) build(parseCSV(await r.text()));
-  else parseWorkbook(await r.arrayBuffer());
+async function loadUrl(url) {
+  const sep = url.includes("?") ? "&" : "?";
+  const r = await fetch(url + sep + "t=" + Date.now());
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  build(parseCSV(await r.text()));
 }
 
 async function load() {
-  // 1) thử các tên file mặc định
-  for (const n of ["baocaotonkho.csv", "baocaotonkho.xlsx"]) {
-    try { await loadUrl(n); return; } catch (e) {}
-  }
-  // 2) dò file .csv/.xlsx bất kỳ trong repo
-  try {
-    const files = await (await fetch(REPO_API)).json();
-    const x = files.find(f => /\.(csv|xlsx?)$/i.test(f.name));
-    if (x) { await loadUrl(x.name); return; }
-  } catch (e) {}
-  showMsg("Không tìm thấy file dữ liệu trong repo. Hãy tải file <b>baocaotonkho.csv</b> lên cùng thư mục với index.html trên GitHub, hoặc bấm <b>Chọn file</b> bên dưới để xem tạm.");
+  if (MODE === "director" && !isDir) return;
+  const url = MODE === "sales" ? CONFIG.SALES_CSV : CONFIG.DIRECTOR_CSV;
+  try { await loadUrl(url); return; } catch (e) {}
+  try { await loadUrl("baocaotonkho.csv"); return; } catch (e) {}
+  showMsg("Không tải được dữ liệu từ Google Sheet. Kiểm tra lại link <b>Publish to web</b> (định dạng CSV) hoặc bấm <b>Cập nhật</b> thử lại." +
+          (isDir ? " Giám đốc có thể bấm <b>Chọn file</b> để xem tạm." : ""));
 }
-load();
+
+applyRole();
+if (MODE === "director" && !isDir) openLogin(); else load();
 </script>
 </body>
 </html>
